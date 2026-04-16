@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#2c2c2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Boutique">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Boutique Artisanale</title>
+<style>
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#d3d1c7;--text:#2c2c2a;--muted:#888780;
+  --light:#f1efe8;--accent:#F5A87C;--info:#185fa5;--danger:#a32d2d;--success:#3b6d11;
+  --danger-bg:#fcebeb;--success-bg:#eaf3de;--warn-bg:#faeeda;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;background:var(--surface);position:relative;}
+
+/* SCREENS */
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* TOPBAR */
+.topbar{background:var(--text);color:#fff;padding:12px 16px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:max(12px,env(safe-area-inset-top));}
+.topbar h1{font-size:16px;font-weight:600;flex:1;}
+.topbar .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,.3);}
+.back-btn{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 4px;line-height:1;}
+
+/* BOTTOM NAV */
+.bottomnav{display:flex;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 6px;gap:3px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;font-family:inherit;}
+.bnav-btn.on{color:var(--text);}
+.bnav-btn .ico{font-size:20px;}
+.bnav-btn.on .ico{transform:scale(1.1);}
+
+/* SCROLL CONTENT */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.pad{padding:14px;}
+
+/* AUTH SCREEN */
+#auth{background:var(--text);justify-content:center;align-items:center;}
+.auth-box{background:var(--surface);border-radius:16px;padding:28px 24px;width:90%;max-width:340px;}
+.auth-logo{text-align:center;margin-bottom:20px;}
+.auth-logo .logo-circle{width:64px;height:64px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.auth-logo h2{font-size:18px;font-weight:700;}
+.auth-logo p{font-size:12px;color:var(--muted);margin-top:3px;}
+.inp{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;color:var(--text);background:var(--bg);margin-bottom:10px;}
+.inp:focus{outline:none;border-color:var(--text);}
+.btn{width:100%;padding:12px;border-radius:9px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn.pri{background:var(--text);color:#fff;}
+.btn.pri:active{opacity:.85;}
+.btn.sec{background:var(--light);color:var(--text);margin-top:8px;}
+.btn-sm{padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:var(--light);color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;}
+.btn-sm.pri{background:var(--text);border-color:var(--text);color:#fff;}
+.btn-sm.danger{border-color:#f7c1c1;color:var(--danger);}
+.err-msg{font-size:12px;color:var(--danger);text-align:center;margin-bottom:8px;display:none;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+
+/* PLANNING */
+.month-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.month-nav button{background:var(--light);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;}
+.month-label{font-size:15px;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:6px;}
+.cal-dh{text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:3px 0;}
+.cal-day{border-radius:8px;padding:4px 3px;min-height:60px;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:border-color .15s;}
+.cal-day.other{opacity:.3;}
+.cal-day.today{border-color:var(--info);border-width:2px;}
+.cal-day.closed{background:var(--danger-bg);border-color:#f7c1c1;cursor:default;}
+.cal-day.sat{background:var(--warn-bg);}
+.cal-dn{font-size:10px;font-weight:700;margin-bottom:3px;padding:0 2px;}
+.cal-dn.today{color:var(--info);}
+.cal-dn.closed{color:var(--danger);}
+.cal-slot{display:flex;align-items:center;border-radius:4px;padding:2px 4px;margin:1px 0;font-size:9px;min-height:18px;cursor:pointer;border:1px dashed var(--border);color:var(--muted);}
+.cal-slot.filled{border:none;font-weight:600;}
+.astr-dot{width:5px;height:5px;border-radius:50%;background:#E24B4A;margin-left:auto;flex-shrink:0;}
+
+/* SLOT PANEL */
+.bottom-sheet{position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.15);z-index:100;transform:translateY(100%);transition:transform .3s ease;max-height:85vh;overflow-y:auto;}
+.bottom-sheet.open{transform:translateY(0);}
+.bs-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 14px;}
+.bs-title{font-size:16px;font-weight:700;padding:0 16px 12px;}
+.bs-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);z-index:99;display:none;}
+.bs-overlay.open{display:block;}
+.artisan-pick{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--border);}
+.artisan-pick:active{background:var(--light);}
+.artisan-pick .av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.artisan-pick .info{flex:1;}
+.artisan-pick .info .name{font-size:14px;font-weight:600;}
+.artisan-pick .info .role{font-size:11px;color:var(--muted);}
+.artisan-pick .check{font-size:18px;color:var(--success);}
+
+/* MESSAGERIE */
+.chat-list .chat-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;}
+.chat-item:active{background:var(--light);}
+.chat-item .av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+.chat-item .meta{flex:1;overflow:hidden;}
+.chat-item .meta .nm{font-size:14px;font-weight:600;}
+.chat-item .meta .last{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.chat-item .badge{min-width:20px;height:20px;border-radius:10px;background:var(--text);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;}
+
+/* CHAT ROOM */
+#chatroom{position:absolute;inset:0;background:var(--surface);z-index:50;transform:translateX(100%);transition:transform .3s ease;display:flex;flex-direction:column;}
+#chatroom.open{transform:translateX(0);}
+.chat-topbar{background:var(--text);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:max(10px,env(safe-area-inset-top));}
+.chat-messages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;background:var(--bg);display:flex;flex-direction:column;gap:6px;}
+.msg{max-width:78%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.45;word-break:break-word;}
+.msg.mine{align-self:flex-end;background:var(--text);color:#fff;border-bottom-right-radius:4px;}
+.msg.other{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.msg .msg-name{font-size:10px;font-weight:700;margin-bottom:3px;opacity:.7;}
+.msg .msg-time{font-size:10px;opacity:.55;margin-top:3px;text-align:right;}
+.chat-input-area{display:flex;gap:8px;padding:10px 12px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:max(10px,env(safe-area-inset-bottom));}
+.chat-inp{flex:1;padding:10px 13px;border:1px solid var(--border);border-radius:22px;font-size:14px;font-family:inherit;background:var(--bg);resize:none;max-height:100px;}
+.chat-inp:focus{outline:none;border-color:var(--text);}
+.send-btn{width:42px;height:42px;border-radius:50%;background:var(--text);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.send-btn:active{opacity:.8;}
+
+/* ARTISANS TAB */
+.artisan-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);}
+.artisan-row .av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;}
+.artisan-row .info{flex:1;overflow:hidden;}
+.artisan-row .info .nm{font-size:14px;font-weight:700;}
+.artisan-row .info .rl{font-size:12px;color:var(--muted);}
+.artisan-row .info .em{font-size:11px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.artisan-row .shifts{font-size:12px;font-weight:700;color:var(--text);background:var(--light);padding:3px 8px;border-radius:10px;flex-shrink:0;}
+
+/* PROFIL */
+.profil-header{display:flex;flex-direction:column;align-items:center;padding:24px 16px 16px;border-bottom:1px solid var(--border);}
+.profil-header .big-av{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin-bottom:10px;}
+.profil-header .pname{font-size:18px;font-weight:700;}
+.profil-header .prole{font-size:13px;color:var(--muted);margin-top:2px;}
+.setting-row{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);gap:12px;font-size:14px;}
+.setting-row .ico{font-size:20px;width:28px;text-align:center;}
+.setting-row .lbl{flex:1;}
+.setting-row .val{font-size:13px;color:var(--muted);}
+
+/* NOTIF BANNER */
+.notif-banner{position:absolute;top:0;left:0;right:0;background:var(--text);color:#fff;padding:12px 16px;font-size:13px;z-index:200;transform:translateY(-100%);transition:transform .3s;border-radius:0 0 12px 12px;}
+.notif-banner.show{transform:translateY(0);}
+
+/* EMPTY STATE */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;gap:10px;color:var(--muted);}
+.empty .ico{font-size:48px;}
+.empty p{font-size:14px;}
+
+/* LOADER */
+.loader{display:flex;align-items:center;justify-content:center;flex:1;}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TOAST */
+.toast{position:absolute;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;opacity:0;transition:all .3s;white-space:nowrap;z-index:300;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* COLOR PALETTE */
+.palette{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;}
+.color-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;}
+.color-dot.sel{border-color:var(--text);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- AUTH -->
+  <div class="screen active" id="auth">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="logo-circle">BA</div>
+        <h2>Boutique Artisanale</h2>
+        <p>Votre espace collaboratif</p>
+      </div>
+      <div id="auth-err" class="err-msg"></div>
+      <input class="inp" id="auth-email" type="email" placeholder="Votre email" autocomplete="email">
+      <input class="inp" id="auth-pass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="btn pri" onclick="doLogin()">Se connecter</button>
+      <button class="btn sec" onclick="showRegister()">Créer un compte</button>
+    </div>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="screen" id="register">
+    <div class="auth-box" style="margin:auto;width:90%;max-width:340px;">
+      <h2 style="margin-bottom:16px;font-size:17px;">Créer mon compte</h2>
+      <div id="reg-err" class="err-msg"></div>
+      <input class="inp" id="reg-name" type="text" placeholder="Prénom et nom" maxlength="25">
+      <input class="inp" id="reg-role" type="text" placeholder="Activité (Bijoutière, Potière…)" maxlength="25">
+      <input class="inp" id="reg-email" type="email" placeholder="Email">
+      <input class="inp" id="reg-pass" type="password" placeholder="Mot de passe (6 car. min)">
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Votre couleur</div>
+        <div class="palette" id="reg-palette"></div>
+      </div>
+      <button class="btn pri" onclick="doRegister()">Créer mon compte</button>
+      <button class="btn sec" onclick="showLogin()">Déjà un compte ? Se connecter</button>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div class="screen" id="main">
+    <div class="topbar" id="topbar">
+      <div class="av" id="user-av" onclick="goTab('profil')"></div>
+      <h1 id="topbar-title">Planning</h1>
+      <div id="topbar-right"></div>
+    </div>
+
+    <!-- TAB PLANNING -->
+    <div id="tab-planning" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="month-nav">
+        <button onclick="chM(-1)">&#8592;</button>
+        <span class="month-label" id="mlbl"></span>
+        <button onclick="chM(1)">&#8594;</button>
+      </div>
+      <div class="scroll">
+        <div class="cal-grid">
+          <div class="cal-dh">L</div><div class="cal-dh">M</div><div class="cal-dh">M</div>
+          <div class="cal-dh">J</div><div class="cal-dh">V</div><div class="cal-dh">S</div>
+          <div class="cal-dh" style="opacity:.5">D</div>
+        </div>
+        <div class="cal-grid" id="CAL" style="padding-top:0;"></div>
+        <div style="height:10px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB MESSAGERIE -->
+    <div id="tab-messages" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="scroll">
+        <div style="padding:12px 14px 4px;font-size:13px;font-weight:700;color:var(--muted);">CONVERSATIONS</div>
+        <div class="chat-list" id="chat-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB ARTISANS -->
+    <div id="tab-artisans" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="scroll" id="artisan-list"></div>
+    </div>
+
+    <!-- TAB PROFIL -->
+    <div id="tab-profil" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="scroll">
+        <div class="profil-header">
+          <div class="big-av" id="profil-av"></div>
+          <div class="pname" id="profil-name"></div>
+          <div class="prole" id="profil-role"></div>
+        </div>
+        <div class="setting-row"><span class="ico">✏️</span><span class="lbl">Modifier mon profil</span></div>
+        <div class="setting-row"><span class="ico">🔔</span><span class="lbl">Notifications</span><span class="val" id="notif-status">Désactivées</span></div>
+        <div class="setting-row" onclick="doLogout()" style="cursor:pointer;"><span class="ico">🚪</span><span class="lbl" style="color:var(--danger);">Se déconnecter</span></div>
+        <div style="padding:20px;text-align:center;font-size:11px;color:var(--muted);">Boutique Artisanale v1.0</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottomnav">
+      <button class="bnav-btn on" id="nav-planning" onclick="goTab('planning')"><span class="ico">📅</span>Planning</button>
+      <button class="bnav-btn" id="nav-messages" onclick="goTab('messages')"><span class="ico">💬</span>Messages</button>
+      <button class="bnav-btn" id="nav-artisans" onclick="goTab('artisans')"><span class="ico">👥</span>Artisans</button>
+      <button class="bnav-btn" id="nav-profil" onclick="goTab('profil')"><span class="ico">👤</span>Profil</button>
+    </div>
+  </div>
+
+  <!-- CHAT ROOM -->
+  <div id="chatroom">
+    <div class="chat-topbar">
+      <button class="back-btn" onclick="closeChat()">&#8592;</button>
+      <div class="av" id="chat-av" style="width:32px;height:32px;font-size:11px;border:none;"></div>
+      <div style="flex:1;"><div id="chat-name" style="font-size:15px;font-weight:700;"></div><div id="chat-role" style="font-size:11px;opacity:.7;"></div></div>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-area">
+      <textarea class="chat-inp" id="chat-inp" placeholder="Votre message…" rows="1" onkeydown="handleKey(event)"></textarea>
+      <button class="send-btn" onclick="sendMsg()">&#10148;</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM SHEET (slot panel) -->
+  <div class="bs-overlay" id="bs-overlay" onclick="closeBS()"></div>
+  <div class="bottom-sheet" id="bottom-sheet">
+    <div class="bs-handle"></div>
+    <div class="bs-title" id="bs-title"></div>
+    <div style="padding:0 16px 10px;">
+      <label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light);border-radius:10px;margin-bottom:10px;cursor:pointer;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#E24B4A;"></span>
+        <span style="font-size:13px;flex:1;">Astreinte ce jour</span>
+        <input type="checkbox" id="astr-cb" onchange="togAstr()" style="width:18px;height:18px;accent-color:#E24B4A;cursor:pointer;">
+      </label>
+    </div>
+    <div id="bs-picks"></div>
+    <div style="padding:10px 16px 20px;">
+      <button class="btn" style="background:var(--danger-bg);color:var(--danger);border:1px solid #f7c1c1;" onclick="clearSlot()">✕ Vider ce créneau</button>
+    </div>
+  </div>
+
+  <!-- NOTIF BANNER -->
+  <div class="notif-banner" id="notif-banner"></div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ================================================================
+// 🔧 REMPLACEZ ICI PAR VOTRE CONFIG FIREBASE
+// ================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBh8YGuZbHkW-VEHtDVo9aYB4sD6J9GTEM",
+  authDomain: "application-boutique-artisanal.firebaseapp.com",
+  projectId: "application-boutique-artisanal",
+  storageBucket: "application-boutique-artisanal.firebasestorage.app",
+  messagingSenderId: "498696291880",
+  appId: "1:498696291880:web:bdebf42cb6485973a4971d"
+};
+// ================================================================
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const MO=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const DJ=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const COLS=['#F5A87C','#F09595','#ED93B1','#FAC775','#C0DD97','#97C459','#9FE1CB','#85B7EB','#CECBF6','#AFA9EC','#F4C0D1','#B5D4F4'];
+
+let cUser=null, cY=2026, cM=3, sel=null, curChat=null;
+let allUsers={}, planning={}, unsubs=[];
+
+function lm(h){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return.299*r+.587*g+.114*b;}
+function tx(c){return lm(c)>155?'rgba(0,0,0,.72)':'rgba(255,255,255,.9)';}
+function ini(n){if(!n)return'?';const p=n.trim().split(/\s+/);return p.length>=2?p[0][0].toUpperCase()+p[1][0].toUpperCase():n.slice(0,2).toUpperCase();}
+function fd(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function toast(msg,dur=2200){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function showErr(id,msg){const e=document.getElementById(id);e.textContent=msg;e.style.display='block';}
+function hideErr(id){document.getElementById(id).style.display='none';}
+
+// SCREENS
+function showScreen(id){['auth','register','main'].forEach(s=>document.getElementById(s).className='screen'+(s===id?' active':''));if(id==='main')initMain();}
+window.showRegister=()=>{showScreen('register');rPalette('reg-palette',0);};
+window.showLogin=()=>showScreen('auth');
+
+// REGISTER PALETTE
+function rPalette(containerId, selIdx){
+  let sc=COLS[selIdx];
+  window._regColor=COLS[selIdx];
+  const el=document.getElementById(containerId);
+  el.innerHTML=COLS.map(c=>`<div class="color-dot${c===sc?' sel':''}" style="background:${c};" onclick="pickReg('${c}','${containerId}')"></div>`).join('');
+}
+window.pickReg=(c,id)=>{window._regColor=c;rPalette(id,COLS.indexOf(c));};
+
+// AUTH
+window.doLogin=async()=>{
+  hideErr('auth-err');
+  const em=document.getElementById('auth-email').value.trim();
+  const pw=document.getElementById('auth-pass').value;
+  if(!em||!pw){showErr('auth-err','Remplissez tous les champs.');return;}
+  try{await signInWithEmailAndPassword(auth,em,pw);}
+  catch(e){showErr('auth-err',e.code==='auth/invalid-credential'?'Email ou mot de passe incorrect.':'Erreur de connexion.');}
+};
+
+window.doRegister=async()=>{
+  hideErr('reg-err');
+  const name=document.getElementById('reg-name').value.trim();
+  const role=document.getElementById('reg-role').value.trim();
+  const em=document.getElementById('reg-email').value.trim();
+  const pw=document.getElementById('reg-pass').value;
+  const color=window._regColor||COLS[0];
+  if(!name||!em||!pw){showErr('reg-err','Remplissez les champs obligatoires.');return;}
+  if(pw.length<6){showErr('reg-err','Mot de passe trop court (6 min).');return;}
+  try{
+    const uc=await createUserWithEmailAndPassword(auth,em,pw);
+    await setDoc(doc(db,'users',uc.user.uid),{name,role,email:em,color,uid:uc.user.uid,createdAt:serverTimestamp()});
+  }catch(e){showErr('reg-err',e.code==='auth/email-already-in-use'?'Cet email est déjà utilisé.':'Erreur : '+e.message);}
+};
+
+window.doLogout=async()=>{
+  if(!confirm('Se déconnecter ?'))return;
+  unsubs.forEach(u=>u());unsubs=[];
+  await signOut(auth);showScreen('auth');
+};
+
+// AUTH STATE
+onAuthStateChanged(auth,async user=>{
+  if(user){
+    const snap=await getDoc(doc(db,'users',user.uid));
+    if(snap.exists()){cUser={...snap.data(),uid:user.uid};showScreen('main');}
+    else showScreen('register');
+  } else {showScreen('auth');}
+});
+
+// MAIN INIT
+function initMain(){
+  updateUserAv();
+  loadAllUsers();
+  loadPlanning();
+  goTab('planning');
+  registerSW();
+}
+
+function updateUserAv(){
+  if(!cUser)return;
+  const av=document.getElementById('user-av');
+  av.textContent=ini(cUser.name);av.style.background=cUser.color||'#F5A87C';av.style.color=tx(cUser.color||'#F5A87C');
+  document.getElementById('profil-av').textContent=ini(cUser.name);
+  document.getElementById('profil-av').style.background=cUser.color||'#F5A87C';
+  document.getElementById('profil-av').style.color=tx(cUser.color||'#F5A87C');
+  document.getElementById('profil-name').textContent=cUser.name||'';
+  document.getElementById('profil-role').textContent=cUser.role||'';
+}
+
+async function loadAllUsers(){
+  const snap=await getDocs(collection(db,'users'));
+  snap.forEach(d=>{allUsers[d.id]={...d.data(),uid:d.id};});
+  rArtisans();rChatList();
+}
+
+async function loadPlanning(){
+  const key=`${cY}-${String(cM+1).padStart(2,'0')}`;
+  const snap=await getDoc(doc(db,'planning',key));
+  planning=snap.exists()?snap.data():{};
+  rCal();
+}
+
+async function savePlanning(){
+  const key=`${cY}-${String(cM+1).padStart(2,'0')}`;
+  await setDoc(doc(db,'planning',key),planning);
+}
+
+// TABS
+window.goTab=function(tab){
+  ['planning','messages','artisans','profil'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'flex':'none';
+    const nb=document.getElementById('nav-'+t);
+    if(nb)nb.className='bnav-btn'+(t===tab?' on':'');
+  });
+  const titles={planning:'Planning',messages:'Messages',artisans:'Artisans',profil:'Mon profil'};
+  document.getElementById('topbar-title').textContent=titles[tab]||'';
+  document.getElementById('topbar-right').innerHTML='';
+  if(tab==='messages'){rChatList();}
+  if(tab==='artisans'){rArtisans();}
+};
+
+// PLANNING
+function rCal(){
+  document.getElementById('mlbl').textContent=`${MO[cM]} ${cY}`;
+  const f=new Date(cY,cM,1);let sd=f.getDay();if(sd===0)sd=7;
+  const st=new Date(f);st.setDate(1-(sd-1));
+  const l=new Date(cY,cM+1,0);let ed=l.getDay();if(ed===0)ed=7;
+  const en=new Date(l);en.setDate(l.getDate()+(7-ed));
+  let h='';const c=new Date(st);
+  while(c<=en){
+    const ds=fd(c);
+    const inM=c.getMonth()===cM;
+    const sun=c.getDay()===0,sat=c.getDay()===6;
+    const tod=ds===fd(new Date());
+    let cl='cal-day';if(!inM)cl+=' other';if(tod)cl+=' today';if(sun)cl+=' closed';if(sat&&!sun)cl+=' sat';
+    h+=`<div class="${cl}"${!sun?` onclick="opSlot('${ds}','mat',0)"`:''}><div class="cal-dn${tod?' today':sun?' closed':''}">${c.getDate()}</div>`;
+    if(!sun){
+      h+=rSlot(ds,'mat',0)+rSlot(ds,'am',0);
+      if(sat)h+=rSlot(ds,'am',1);
+    } else {
+      h+='<div style="font-size:8px;color:var(--danger);text-align:center;">Fermé</div>';
+    }
+    h+='</div>';c.setDate(c.getDate()+1);
+  }
+  document.getElementById('CAL').innerHTML=h;
+}
+
+function rSlot(ds,p,ix){
+  const k=`${ds}|${p}|${ix}`;
+  const uid=planning[k];
+  const as=planning[`astr|${k}`];
+  const lb=p==='mat'?'Mat':'AM';
+  if(!uid)return`<div class="cal-slot" onclick="opSlot('${ds}','${p}',${ix});event.stopPropagation()">+${lb}</div>`;
+  const u=allUsers[uid];
+  if(!u)return`<div class="cal-slot" onclick="opSlot('${ds}','${p}',${ix});event.stopPropagation()">+${lb}</div>`;
+  const t=tx(u.color||'#ccc');
+  return`<div class="cal-slot filled" style="background:${u.color||'#ccc'};" onclick="opSlot('${ds}','${p}',${ix});event.stopPropagation()">
+    <span style="color:${t};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;">${ini(u.name)}</span>
+    ${as?`<span class="astr-dot"></span>`:''}
+  </div>`;
+}
+
+window.chM=async(d)=>{cM+=d;if(cM>11){cM=0;cY++;}if(cM<0){cM=11;cY--;}await loadPlanning();};
+
+window.opSlot=(ds,p,ix)=>{
+  sel={ds,p,ix};
+  const d=new Date(ds);
+  const lp=p==='mat'?'🌅 Matin  9h–13h':'🌇 Après-midi  14h–18h'+(ix>0?' (2ème)':'');
+  document.getElementById('bs-title').textContent=`${DJ[d.getDay()]} ${d.getDate()} ${MO[d.getMonth()]}`;
+  document.getElementById('astr-cb').checked=!!planning[`astr|${ds}|${p}|${ix}`];
+  const curUid=planning[`${ds}|${p}|${ix}`];
+  document.getElementById('bs-picks').innerHTML=
+    `<div style="padding:0 16px 4px;font-size:11px;font-weight:700;color:var(--muted);">${lp}</div>`+
+    Object.values(allUsers).map(u=>{
+      const ac=curUid===u.uid;const t=tx(u.color||'#ccc');
+      return`<div class="artisan-pick" style="${ac?`background:${u.color};`:''}" onclick="asA('${u.uid}')">
+        <div class="av" style="background:${u.color||'#ccc'};color:${t};">${ini(u.name)}</div>
+        <div class="info"><div class="name" style="${ac?`color:${t};`:''}">${u.name}</div><div class="role" style="${ac?`color:${t};opacity:.7;`:''}">${u.role||''}</div></div>
+        ${ac?`<span class="check">✓</span>`:''}
+      </div>`;
+    }).join('');
+  document.getElementById('bottom-sheet').classList.add('open');
+  document.getElementById('bs-overlay').classList.add('open');
+};
+
+window.asA=async(uid)=>{
+  if(!sel)return;
+  const k=`${sel.ds}|${sel.p}|${sel.ix}`;
+  planning[k]=uid;
+  await savePlanning();rCal();opSlot(sel.ds,sel.p,sel.ix);toast('Créneau assigné ✓');
+};
+window.togAstr=async()=>{
+  if(!sel)return;
+  const k=`astr|${sel.ds}|${sel.p}|${sel.ix}`;
+  const v=document.getElementById('astr-cb').checked;
+  if(v)planning[k]=1;else delete planning[k];
+  await savePlanning();rCal();
+};
+window.clearSlot=async()=>{
+  if(!sel)return;
+  const k=`${sel.ds}|${sel.p}|${sel.ix}`;
+  delete planning[k];delete planning[`astr|${k}`];
+  await savePlanning();closeBS();rCal();toast('Créneau vidé');
+};
+window.closeBS=()=>{document.getElementById('bottom-sheet').classList.remove('open');document.getElementById('bs-overlay').classList.remove('open');};
+
+// ARTISANS
+function rArtisans(){
+  const users=Object.values(allUsers);
+  if(!users.length){document.getElementById('artisan-list').innerHTML=`<div class="empty"><span class="ico">👥</span><p>Aucun artisan enregistré</p></div>`;return;}
+  const nSh=(uid)=>Object.entries(planning).filter(([k,v])=>!k.startsWith('astr')&&v===uid).length;
+  document.getElementById('artisan-list').innerHTML=users.map(u=>{
+    const t=tx(u.color||'#ccc'),n=nSh(u.uid);
+    return`<div class="artisan-row">
+      <div class="av" style="background:${u.color||'#ccc'};color:${t};">${ini(u.name)}</div>
+      <div class="info">
+        <div class="nm">${u.name}${u.uid===cUser?.uid?' <span style="font-size:10px;color:var(--muted);">(moi)</span>':''}</div>
+        <div class="rl">${u.role||'Artisan'}</div>
+        <div class="em">${u.email||''}</div>
+      </div>
+      <div class="shifts">${n} crén.</div>
+    </div>`;
+  }).join('');
+}
+
+// MESSAGERIE
+function rChatList(){
+  const users=Object.values(allUsers).filter(u=>u.uid!==cUser?.uid);
+  const grp={uid:'__groupe__',name:'Groupe boutique',role:'Tous les artisans',color:'#2c2c2a',isGroup:true};
+  const all=[grp,...users];
+  document.getElementById('chat-list').innerHTML=all.map(u=>{
+    const t=tx(u.color||'#ccc');
+    return`<div class="chat-item" onclick="openChat('${u.uid}','${u.name}','${u.role||''}','${u.color||'#ccc'}',${!!u.isGroup})">
+      <div class="av" style="background:${u.color||'#ccc'};color:${t};">${u.isGroup?'💬':ini(u.name)}</div>
+      <div class="meta">
+        <div class="nm">${u.name}</div>
+        <div class="last">${u.isGroup?'Messages pour tout le groupe':'Conversation privée'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.openChat=(uid,name,role,color,isGroup)=>{
+  curChat={uid,name,role,color,isGroup};
+  const t=tx(color);
+  document.getElementById('chat-av').textContent=isGroup?'💬':ini(name);
+  document.getElementById('chat-av').style.background=color;
+  document.getElementById('chat-av').style.color=t;
+  document.getElementById('chat-name').textContent=name;
+  document.getElementById('chat-role').textContent=isGroup?'Tous les artisans':role;
+  document.getElementById('chatroom').classList.add('open');
+  document.getElementById('chat-inp').value='';
+  loadMessages();
+};
+
+window.closeChat=()=>{
+  document.getElementById('chatroom').classList.remove('open');
+  unsubs.forEach(u=>{try{u();}catch(e){}});unsubs=[];curChat=null;
+};
+
+function loadMessages(){
+  const roomId=curChat.isGroup?'__groupe__':[cUser.uid,curChat.uid].sort().join('_');
+  const q=query(collection(db,'chats',roomId,'messages'),orderBy('createdAt'));
+  const unsub=onSnapshot(q,snap=>{
+    const msgs=document.getElementById('chat-messages');
+    msgs.innerHTML=snap.docs.map(d=>{
+      const m=d.data();const mine=m.uid===cUser?.uid;
+      const t=new Date(m.createdAt?.seconds*1000);
+      const hm=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+      return`<div class="msg ${mine?'mine':'other'}">
+        ${!mine?`<div class="msg-name">${m.name||''}</div>`:''}
+        ${m.text}
+        <div class="msg-time">${hm}</div>
+      </div>`;
+    }).join('');
+    msgs.scrollTop=msgs.scrollHeight;
+  });
+  unsubs.push(unsub);
+}
+
+window.sendMsg=async()=>{
+  const inp=document.getElementById('chat-inp');
+  const txt=inp.value.trim();if(!txt||!curChat)return;
+  inp.value='';inp.style.height='auto';
+  const roomId=curChat.isGroup?'__groupe__':[cUser.uid,curChat.uid].sort().join('_');
+  await addDoc(collection(db,'chats',roomId,'messages'),{text:txt,uid:cUser.uid,name:cUser.name,createdAt:serverTimestamp()});
+};
+
+window.handleKey=(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}};
+
+// SERVICE WORKER
+function registerSW(){
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
+}
+</script>
+</body>
+</html>
