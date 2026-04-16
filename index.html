@@ -769,7 +769,7 @@ window.loadEvts=async()=>{
   const today=fd(new Date());
   const q=query(collection(db,'events'),orderBy('date'));
   const snap=await getDocs(q);
-  const colors={Atelier:'#9FE1CB',Événement:'#B5D4F4',Pop-up:'#FAC775',Dédicace:'#F4C0D1',Autre:'#D3D1C7'};
+  const colors={'Atelier':'#9FE1CB','Événement':'#B5D4F4','Pop-up':'#FAC775','Dédicace':'#F4C0D1','Autre':'#D3D1C7'};
   let html='';
   snap.forEach(d=>{
     const e=d.data();const c=colors[e.type]||'#D3D1C7';
