@@ -319,11 +319,17 @@ html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-seri
 <div class="bs" id="bsv">
   <div class="bsh"></div><div class="bst">💰 Enregistrer une vente</div>
   <div style="padding:0 15px 10px;">
-    <select class="inp" id="vart" style="margin-bottom:9px;"></select>
-    <input class="inp" id="vprod" placeholder="Produit vendu…" style="margin-bottom:9px;">
-    <div style="display:flex;gap:8px;margin-bottom:9px;"><input class="inp" id="vmnt" type="number" placeholder="Montant (€) *" step="0.01" min="0" style="flex:1;"><input class="inp" id="vrem" type="number" placeholder="Remise (€)" step="0.01" min="0" style="flex:1;"></div>
-    <select class="inp" id="vpay" style="margin-bottom:9px;"><option>Espèces</option><option>Carte bancaire</option><option>Virement</option><option>Chèque</option><option>PayPal</option></select>
-    <div id="solde-info" style="display:none;padding:7px;background:var(--dan-bg);border-radius:8px;font-size:12px;color:var(--dan);margin-bottom:9px;"></div>
+    <div style="font-size:12px;color:var(--mut);margin-bottom:4px;">Artisan vendeur</div>
+    <select class="inp" id="vart" style="margin-bottom:9px;" onchange="loadVProduits()"></select>
+    <div style="font-size:12px;color:var(--mut);margin-bottom:4px;">Produit vendu *</div>
+    <select class="inp" id="vprod" style="margin-bottom:9px;"></select>
+    <div id="vprod-solde" style="display:none;padding:7px;background:var(--dan-bg);border-radius:8px;font-size:12px;color:var(--dan);margin-bottom:9px;"></div>
+    <div style="font-size:12px;color:var(--mut);margin-bottom:4px;">Montant (€) *</div>
+    <input class="inp" id="vmnt" type="number" placeholder="0.00" step="0.01" min="0" style="margin-bottom:9px;">
+    <div style="font-size:12px;color:var(--mut);margin-bottom:4px;">Remise appliquée (€)</div>
+    <input class="inp" id="vrem" type="number" placeholder="0.00" step="0.01" min="0" style="margin-bottom:9px;">
+    <div style="font-size:12px;color:var(--mut);margin-bottom:4px;">Mode de paiement</div>
+    <select class="inp" id="vpay" style="margin-bottom:14px;"><option>Espèces</option><option>Carte bancaire</option><option>Virement</option><option>Chèque</option><option>PayPal</option></select>
     <button class="btn pri" onclick="saveV()">✅ Enregistrer</button><button class="btn sec" onclick="closeBS()">Annuler</button>
   </div>
 </div>
@@ -334,7 +340,12 @@ html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-seri
     <div style="display:flex;gap:8px;margin-bottom:9px;"><input class="inp" id="pico" placeholder="🎨" style="width:54px;font-size:20px;text-align:center;"><input class="inp" id="pnm2" placeholder="Nom du produit *" maxlength="40" style="flex:1;"></div>
     <select class="inp" id="pcat" style="margin-bottom:9px;"><option>Bijoux</option><option>Céramique</option><option>Textile</option><option>Peinture</option><option>Sculpture</option><option>Cosmétique</option><option>Alimentaire</option><option>Décoration</option><option>Autre</option></select>
     <textarea class="inp" id="pdesc" placeholder="Description, matériaux, précautions d'usage, entretien…" rows="3" style="margin-bottom:9px;resize:none;" maxlength="200"></textarea>
-    <div style="display:flex;gap:8px;margin-bottom:14px;"><input class="inp" id="pprix" type="number" placeholder="Prix (€) *" step="0.01" min="0" style="flex:1;"><input class="inp" id="pstock" type="number" placeholder="Stock" min="0" style="flex:1;"><input class="inp" id="pstockmin" type="number" placeholder="Alerte stock" min="0" style="flex:1;" title="Alerte si stock ≤"></div>
+    <div style="display:flex;gap:8px;margin-bottom:9px;"><input class="inp" id="pprix" type="number" placeholder="Prix (€) *" step="0.01" min="0" style="flex:1;"><input class="inp" id="pstock" type="number" placeholder="Stock" min="0" style="flex:1;"><input class="inp" id="pstockmin" type="number" placeholder="Alerte stock" min="0" style="flex:1;" title="Alerte si stock ≤"></div>
+    <label style="display:flex;align-items:center;gap:8px;padding:9px;background:var(--dan-bg);border-radius:9px;margin-bottom:9px;cursor:pointer;">
+      <input type="checkbox" id="pensolde" style="width:16px;height:16px;accent-color:#E24B4A;">
+      <span style="font-size:13px;color:var(--dan);flex:1;">🏷️ Ce produit est en solde</span>
+      <input class="inp" id="psoldepct" type="number" placeholder="%" min="0" max="90" style="width:60px;font-size:12px;padding:6px;"> %
+    </label>
     <button class="btn pri" onclick="saveP()">✅ Enregistrer</button><button class="btn sec" onclick="closeBS()">Annuler</button>
   </div>
 </div>
@@ -558,15 +569,14 @@ function rSl(ds,p,ix,pl){
 function hasS(uid,ds,pl){return['mat','am'].some(p=>[0,1].some(ix=>pl[`${ds}|${p}|${ix}`]===uid));}
 window.chM=async(d)=>{cM+=d;if(cM>11){cM=0;cY++;}if(cM<0){cM=11;cY--;}await lPL();rCal();};
 window.setPM=(m)=>{pMode=m;rCal();};
-window.tkSl=async(ds,p,ix)=>{if(iF(ds)&&!OM[ds]){toast('Fermé');return;}if(PL_P[`${ds}|${p}|${ix}`]){toast('Déjà pris');return;}if(!confirm(`S'inscrire le ${new Date(ds).toLocaleDateString('fr-FR')} — ${p==='mat'?'Matin':'Après-midi'+(ix>0?' (2ème)':'')} ?`))return;PL_P[`${ds}|${p}|${ix}`]=CU.uid;if(PL_P[`astr|${ds}`]===CU.uid)delete PL_P[`astr|${ds}`];await sPP();rCal();toast('✓ Inscrit !');sysmsg(`📅 ${CU.name} s'inscrit le ${new Date(ds).toLocaleDateString('fr-FR')} (${p==='mat'?'Matin':'AM'})`);};
+window.tkSl=async(ds,p,ix)=>{if(iF(ds)&&!OM[ds]){toast('Fermé');return;}if(PL_P[`${ds}|${p}|${ix}`]){toast('Déjà pris');return;}if(!confirm(`S'inscrire le ${new Date(ds).toLocaleDateString('fr-FR')} — ${p==='mat'?'Matin':'Après-midi'+(ix>0?' (2ème)':'')} ?`))return;PL_P[`${ds}|${p}|${ix}`]=CU.uid;await sPP();rCal();toast('✓ Inscrit !');sysmsg(`📅 ${CU.name} s'inscrit le ${new Date(ds).toLocaleDateString('fr-FR')} (${p==='mat'?'Matin':'AM'})`);};
 window.cnSl=async(ds,p,ix)=>{if(!confirm('Annuler votre créneau ?'))return;delete PL_P[`${ds}|${p}|${ix}`];await sPP();rCal();toast('✓ Annulé');};
 window.siSl=(ds,p,ix)=>{const pl=getPL();const uid=pl[`${ds}|${p}|${ix}`];const u=US[uid];if(!u)return;const d=new Date(ds);document.getElementById('bsst').textContent=`${DJ[d.getDay()]} ${d.getDate()} ${MO[d.getMonth()]}`;document.getElementById('bssc').innerHTML=`<div style="padding:0 15px 20px;"><div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--li);border-radius:10px;margin-bottom:10px;"><div class="av" style="width:42px;height:42px;font-size:13px;background:${u.color};color:${tx(u.color)};">${ini(u.name)}</div><div><div style="font-size:14px;font-weight:700;">${u.name}</div><div style="font-size:11px;color:var(--mut);">${u.role||''}</div><div style="font-size:11px;color:var(--mut);">${u.tel||u.email||''}</div></div></div>${isA()?`<button class="btn" style="background:var(--dan-bg);color:var(--dan);border:1px solid #f7c1c1;" onclick="admCl('${ds}','${p}',${ix})">✕ Libérer (admin)</button>`:''}<button class="btn sec" onclick="closeBS()">Fermer</button></div>`;openBS('bsslot');};
 window.admCl=async(ds,p,ix)=>{const pl=pMode==='fige'?PL_F:PL_P;delete pl[`${ds}|${p}|${ix}`];pMode==='fige'?await sPF():await sPP();closeBS();rCal();toast('✓ Libéré');};
 window.opAs=async(ds)=>{const pl=PL_P;const d=new Date(ds);const au=pl[`astr|${ds}`];document.getElementById('bsst').textContent=`${DJ[d.getDay()]} ${d.getDate()} ${MO[d.getMonth()]} — Astreinte`;let c='';
 if(au===CU.uid)c=`<div style="padding:0 15px 20px;"><div style="background:var(--dan-bg);border:1px solid #f7c1c1;border-radius:10px;padding:12px;margin-bottom:10px;font-size:12px;color:var(--dan);">🔴 Vous êtes en astreinte — disponible toute la journée en cas d'imprévu.</div><button class="btn" style="background:var(--dan-bg);color:var(--dan);border:1px solid #f7c1c1;" onclick="canAs('${ds}')">✕ Annuler</button><button class="btn sec" onclick="closeBS()">Fermer</button></div>`;
 else if(au){const u=US[au];c=`<div style="padding:0 15px 20px;"><div style="background:var(--war-bg);border-radius:10px;padding:12px;margin-bottom:10px;"><div style="font-size:12px;font-weight:700;margin-bottom:6px;">Astreinte : ${u?.name||'?'}</div><div style="font-size:11px;color:var(--mut);">${u?.tel||u?.email||''}</div></div>${isA()?`<button class="btn" style="background:var(--dan-bg);color:var(--dan);border:1px solid #f7c1c1;" onclick="admAs('${ds}')">✕ Libérer (admin)</button>`:''}<button class="btn sec" onclick="closeBS()">Fermer</button></div>`;}
-else if(hasS(CU.uid,ds,pl))c=`<div style="padding:0 15px 20px;"><div style="background:var(--war-bg);border-radius:10px;padding:12px;margin-bottom:10px;font-size:12px;color:var(--war);">⚠️ Vous avez une permanence ce jour — astreinte incompatible.</div><button class="btn sec" onclick="closeBS()">Fermer</button></div>`;
-else c=`<div style="padding:0 15px 20px;"><div style="background:var(--suc-bg);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--suc);">✅ Disponible. L'astreinte couvre toute la journée.</div><button class="btn pri" onclick="tkAs('${ds}')">🔴 Prendre l'astreinte</button><button class="btn sec" onclick="closeBS()">Annuler</button></div>`;
+else c=`<div style="padding:0 15px 20px;"><div style="background:var(--suc-bg);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--suc);">✅ Jour disponible. L'astreinte signifie être joignable en cas d'imprévu. Compatible avec une permanence.</div><button class="btn pri" onclick="tkAs('${ds}')">🔴 Prendre l'astreinte</button><button class="btn sec" onclick="closeBS()">Annuler</button></div>`;
 document.getElementById('bssc').innerHTML=c;openBS('bsslot');};
 window.tkAs=async(ds)=>{if(hasS(CU.uid,ds,PL_P)){toast('⚠ Permanence ce jour');return;}if(PL_P[`astr|${ds}`]){toast('⚠ Déjà prise');return;}PL_P[`astr|${ds}`]=CU.uid;await sPP();closeBS();rCal();toast('✓ Astreinte !');sysmsg(`🔴 ${CU.name} prend l'astreinte le ${new Date(ds).toLocaleDateString('fr-FR')}`);};
 window.canAs=async(ds)=>{delete PL_P[`astr|${ds}`];await sPP();closeBS();rCal();toast('✓ Annulé');};
@@ -643,14 +653,35 @@ window.loadV=async()=>{
   document.getElementById('vl').innerHTML=h||`<div class="empty"><span style="font-size:40px;">💰</span><p>Aucune vente ce jour</p></div>`;
   calcCaisse();
 };
-window.openAV=()=>{
-  document.getElementById('vart').innerHTML=Object.values(US).filter(u=>!u.blocked).map(u=>`<option value="${u.uid}">${u.name}</option>`).join('');document.getElementById('vart').value=CU.uid;['vprod','vmnt','vrem'].forEach(i=>document.getElementById(i).value='');
-  const si=document.getElementById('solde-info');const now=new Date();if(SOLDE.debut&&now>=new Date(SOLDE.debut)&&now<=new Date(SOLDE.fin)){si.style.display='block';si.textContent=`🏷️ Soldes actifs — remise suggérée: ${SOLDE.pct||0}%`;}else si.style.display='none';
+window.openAV=async()=>{
+  const arts=Object.values(US).filter(u=>!u.blocked);
+  document.getElementById('vart').innerHTML=arts.map(u=>`<option value="${u.uid}">${u.name}</option>`).join('');
+  document.getElementById('vart').value=CU.uid;
+  document.getElementById('vmnt').value='';document.getElementById('vrem').value='';
+  await loadVProduits();
   openBS('bsv');
 };
-window.saveV=async()=>{const artId=document.getElementById('vart').value,prod=document.getElementById('vprod').value.trim(),mnt=document.getElementById('vmnt').value,rem=document.getElementById('vrem').value||0,pay=document.getElementById('vpay').value;if(!mnt||isNaN(mnt)||Number(mnt)<=0){toast('⚠ Montant invalide');return;}const date=document.getElementById('vdate').value||fd(new Date());const now=new Date();const sol=SOLDE.debut&&now>=new Date(SOLDE.debut)&&now<=new Date(SOLDE.fin);await addDoc(collection(db,'ventes'),{artisanId:artId,produit:prod,montant:Number(mnt),remise:Number(rem),paiement:pay,date,solde:sol,pct:sol?SOLDE.pct:0,createdAt:serverTimestamp()});
-// décrémenter stock si produit connu
-const ps=await getDocs(query(collection(db,'produits'),where('artisanId','==',artId),where('nom','==',prod)));ps.forEach(async d=>{const p=d.data();if(p.stock>0){await updateDoc(d.ref,{stock:p.stock-1});if(p.stock-1<=(p.stockmin||0))sysmsg(`⚠️ Stock bas : ${p.nom} de ${US[artId]?.name||'?'} (reste ${p.stock-1})`);}});
+window.loadVProduits=async()=>{
+  const artId=document.getElementById('vart').value;
+  const snap=await getDocs(query(collection(db,'produits'),where('artisanId','==',artId),orderBy('nom')));
+  const sel=document.getElementById('vprod');
+  const sd=document.getElementById('vprod-solde');
+  if(snap.empty){sel.innerHTML='<option value="">— Aucun produit créé —</option>';sd.style.display='none';return;}
+  const now=new Date();const soldeActif=SOLDE.debut&&now>=new Date(SOLDE.debut)&&now<=new Date(SOLDE.fin);
+  sel.innerHTML=snap.docs.map(d=>{const p=d.data();const hasSolde=p.enSolde&&soldeActif;return`<option value="${d.id}" data-prix="${p.prix}" data-nom="${p.nom}" data-solde="${hasSolde}" data-pct="${p.soldePct||SOLDE.pct||0}">${p.icone||'🎨'} ${p.nom} — ${fE(p.prix)}${hasSolde?` 🏷️ -${p.soldePct||SOLDE.pct||0}%`:''} (Stock: ${p.stock??'N/A'})</option>`;}).join('');
+  // Auto-fill prix et remise solde
+  sel.onchange=()=>{
+    const opt=sel.selectedOptions[0];if(!opt)return;
+    const prix=Number(opt.dataset.prix||0);const hasSolde=opt.dataset.solde==='true';const pct=Number(opt.dataset.pct||0);
+    document.getElementById('vmnt').value=prix.toFixed(2);
+    if(hasSolde){const rem=Math.round(prix*pct/100*100)/100;document.getElementById('vrem').value=rem.toFixed(2);sd.style.display='block';sd.textContent=`🏷️ Solde actif — Remise suggérée: -${pct}% = -${fE(rem)}`;}
+    else{document.getElementById('vrem').value='';sd.style.display='none';}
+  };
+  sel.dispatchEvent(new Event('change'));
+};
+window.saveV=async()=>{const artId=document.getElementById('vart').value;const prodSel=document.getElementById('vprod');const prodOpt=prodSel.selectedOptions[0];const prodNom=prodOpt?.dataset?.nom||prodOpt?.text||'Vente';const prodId=prodSel.value;const mnt=document.getElementById('vmnt').value;const rem=document.getElementById('vrem').value||0;const pay=document.getElementById('vpay').value;if(!mnt||isNaN(mnt)||Number(mnt)<=0){toast('⚠ Montant invalide');return;}if(!prodId){toast('⚠ Sélectionnez un produit');return;}const date=document.getElementById('vdate').value||fd(new Date());const now=new Date();const sol=SOLDE.debut&&now>=new Date(SOLDE.debut)&&now<=new Date(SOLDE.fin);await addDoc(collection(db,'ventes'),{artisanId:artId,produit:prodNom,produitId:prodId,montant:Number(mnt),remise:Number(rem),paiement:pay,date,solde:sol&&Number(rem)>0,pct:sol?SOLDE.pct:0,createdAt:serverTimestamp()});
+// décrémenter stock
+const pdoc=await getDoc(doc(db,'produits',prodId));if(pdoc.exists()){const p=pdoc.data();if(p.stock>0){await updateDoc(doc(db,'produits',prodId),{stock:p.stock-1});if(p.stock-1<=(p.stockmin||0))sysmsg(`⚠️ Stock bas : ${p.nom} de ${US[artId]?.name||'?'} (reste ${p.stock-1})`);}};
 closeBS();loadV();toast('✓ Vente enregistrée !');};
 
 // SOLDES
@@ -676,8 +707,8 @@ window.loadCat=async()=>{
   document.getElementById('pl2').innerHTML=h||`<div class="empty"><span style="font-size:40px;">🛍️</span><p>Aucun produit</p></div>`;
 };
 window.setCF=(f)=>{catFilter=f;loadCat();};
-window.openAP=()=>{['pico','pnm2','pdesc','pprix','pstock','pstockmin'].forEach(i=>document.getElementById(i).value='');openBS('bsp2');};
-window.saveP=async()=>{const nm=document.getElementById('pnm2').value.trim(),px=document.getElementById('pprix').value;if(!nm||!px){toast('⚠ Nom et prix requis');return;}await addDoc(collection(db,'produits'),{artisanId:CU.uid,icone:document.getElementById('pico').value||'🎨',nom:nm,description:document.getElementById('pdesc').value.trim(),categorie:document.getElementById('pcat').value,prix:Number(px),stock:Number(document.getElementById('pstock').value||0),stockmin:Number(document.getElementById('pstockmin').value||0),createdAt:serverTimestamp()});closeBS();loadCat();toast('✓ Produit ajouté !');};
+window.openAP=()=>{['pico','pnm2','pdesc','pprix','pstock','pstockmin','psoldepct'].forEach(i=>document.getElementById(i).value='');document.getElementById('pensolde').checked=false;openBS('bsp2');};
+window.saveP=async()=>{const nm=document.getElementById('pnm2').value.trim(),px=document.getElementById('pprix').value;if(!nm||!px){toast('⚠ Nom et prix requis');return;}await addDoc(collection(db,'produits'),{artisanId:CU.uid,icone:document.getElementById('pico').value||'🎨',nom:nm,description:document.getElementById('pdesc').value.trim(),categorie:document.getElementById('pcat').value,prix:Number(px),stock:Number(document.getElementById('pstock').value||0),stockmin:Number(document.getElementById('pstockmin').value||0),enSolde:document.getElementById('pensolde').checked,soldePct:Number(document.getElementById('psoldepct').value||0),createdAt:serverTimestamp()});closeBS();loadCat();toast('✓ Produit ajouté !');};
 window.dP=async(id)=>{if(!confirm('Supprimer ?'))return;await deleteDoc(doc(db,'produits',id));loadCat();toast('✓ Supprimé');};
 
 // ===== ÉVÉNEMENTS =====
@@ -756,7 +787,7 @@ window.dF=async(d)=>{delete FM[d];await sCfg();buildCalBody();rCal();};
 window.addO=async()=>{const d=document.getElementById('od2')?.value;if(!d)return;OM[d]=document.getElementById('omo2')?.value.trim()||'Ouverture exceptionnelle';await sCfg();buildCalBody();rCal();toast('✓ Ouverture ajoutée');};
 window.dO=async(d)=>{delete OM[d];await sCfg();buildCalBody();rCal();};
 
-window.openUM=async()=>{await lU();const list=Object.values(US);openP2('👤 Comptes',`<div class="st">AJOUTER UN COMPTE</div><div style="padding:0 14px 10px;"><input class="inp" id="unm" placeholder="Nom *" style="margin-bottom:7px;" maxlength="25"><input class="inp" id="uro" placeholder="Activité" style="margin-bottom:7px;" maxlength="30"><input class="inp" id="usp" placeholder="Spécialités" style="margin-bottom:7px;" maxlength="80"><input class="inp" id="uem3" type="email" placeholder="Email *" style="margin-bottom:7px;"><input class="inp" id="upw2" type="password" placeholder="Mot de passe *" style="margin-bottom:7px;"><div style="font-size:11px;color:var(--mut);margin-bottom:5px;">Couleur</div><div class="pal" id="upal"></div><div class="err" id="uerr"></div><button class="sm p" onclick="addUser()" style="width:100%;padding:9px;margin-top:4px;">+ Créer le compte</button></div><div class="st">COMPTES EXISTANTS (${list.length})</div>`+list.map(u=>`<div class="row" onclick="oArt('${u.uid}');closeP2()"><div class="av" style="width:38px;height:38px;font-size:12px;background:${u.color};color:${tx(u.color)};">${ini(u.name)}</div><div style="flex:1;overflow:hidden;"><div style="font-size:13px;font-weight:600;">${u.name} ${u.isAdmin?'👑':''}</div><div style="font-size:10px;color:var(--mut);">${u.email||''}</div></div>${u.blocked?'<span style="font-size:10px;color:var(--dan);">Bloqué</span>':'<span style="font-size:10px;color:var(--suc);">Actif</span>'}</div>`).join(''));rPal('upal',0);};
+window.openUM=async()=>{await lU();const list=Object.values(US);openP2('👤 Comptes',`<div class="st">AJOUTER UN COMPTE</div><div style="padding:0 14px 10px;"><input class="inp" id="unm" placeholder="Nom *" style="margin-bottom:7px;" maxlength="25"><input class="inp" id="uro" placeholder="Activité" style="margin-bottom:7px;" maxlength="30"><input class="inp" id="usp" placeholder="Spécialités" style="margin-bottom:7px;" maxlength="80"><input class="inp" id="uem3" type="email" placeholder="Email *" style="margin-bottom:7px;"><input class="inp" id="upw2" type="password" placeholder="Mot de passe *" style="margin-bottom:7px;"><div style="font-size:11px;color:var(--mut);margin-bottom:5px;">Couleur</div><div class="pal" id="upal"></div><div class="err" id="uerr"></div><button class="sm p" onclick="addUser()" style="width:100%;padding:9px;margin-top:4px;">+ Créer le compte</button></div><div class="st">COMPTES EXISTANTS (${list.length})</div>`+list.map(u=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bor);"><div class="av" style="width:38px;height:38px;font-size:12px;background:${u.color};color:${tx(u.color)};">${ini(u.name)}</div><div style="flex:1;overflow:hidden;"><div style="font-size:13px;font-weight:600;">${u.name} ${u.isAdmin?'👑':''}</div><div style="font-size:10px;color:var(--mut);">${u.email||''}</div></div>${u.blocked?'<span style="font-size:10px;color:var(--dan);">Bloqué</span>':'<span style="font-size:10px;color:var(--suc);">Actif</span>'}<button class="sm p" onclick="oArt('${u.uid}')" style="font-size:11px;padding:4px 9px;margin-left:4px;">✏️</button></div>`).join(''));rPal('upal',0);};
 window.addUser=async()=>{document.getElementById('uerr').style.display='none';const nm=document.getElementById('unm').value.trim(),ro=document.getElementById('uro').value.trim(),sp=document.getElementById('usp').value.trim(),em=document.getElementById('uem3').value.trim(),pw=document.getElementById('upw2').value,cl=window._rc||CLS[0];if(!nm||!em||!pw){sE('uerr','Champs obligatoires manquants.');return;}if(pw.length<6){sE('uerr','Mot de passe trop court.');return;}try{const uc=await createUserWithEmailAndPassword(auth,em,pw);await setDoc(doc(db,'users',uc.user.uid),{name:nm,role:ro,specialites:sp,email:em,color:cl,uid:uc.user.uid,isAdmin:false,blocked:false,createdAt:serverTimestamp()});await lU();toast(`✓ ${nm} créé !`);openUM();}catch(e){sE('uerr',e.code==='auth/email-already-in-use'?'Email déjà utilisé.':'Erreur: '+e.message);}};
 
 window.openTheme=()=>{openP2('🎨 Thème du mois',`<div style="padding:14px;"><div style="font-size:12px;color:var(--mut);margin-bottom:4px;">Mois concerné (AAAA-MM)</div><input class="inp" id="th-m" value="${THEME.mois||mKey()}" style="margin-bottom:8px;"><div style="font-size:12px;color:var(--mut);margin-bottom:4px;">Titre du thème *</div><input class="inp" id="th-t" value="${THEME.titre||''}" placeholder="Ex: Printemps artisanal, Fêtes de fin d'année…" style="margin-bottom:8px;" maxlength="50"><div style="font-size:12px;color:var(--mut);margin-bottom:4px;">Description</div><input class="inp" id="th-d" value="${THEME.desc||''}" placeholder="Couleurs, ambiance, conseils de présentation…" style="margin-bottom:14px;" maxlength="120"><button class="btn pri" onclick="saveTheme()">💾 Enregistrer</button></div>`);};
@@ -802,9 +833,9 @@ window.oArt=async(uid)=>{
   <div style="padding:0 14px 20px;">${vh||'<div style="font-size:11px;color:var(--mut);">Aucune vente</div>'}</div>`);
   rPal('adpal',CLS.indexOf(u.color));
 };
-window.saveArt=async()=>{if(!cAid)return;const upd={name:document.getElementById('ednm').value.trim(),role:document.getElementById('edro').value.trim(),specialites:document.getElementById('edsp').value.trim(),tel:document.getElementById('edtel').value.trim(),color:cAcl||US[cAid].color,isAdmin:document.getElementById('edadm').checked};if(!upd.name){toast('⚠ Nom requis');return;}await updateDoc(doc(db,'users',cAid),upd);await lU();closeP2();openAdm();toast('✓ Mis à jour !');};
-window.togBlk=async()=>{if(!cAid)return;const u=US[cAid];const nb=!u.blocked;if(!confirm(nb?`Bloquer ${u.name} ?`:`Débloquer ${u.name} ?`))return;await updateDoc(doc(db,'users',cAid),{blocked:nb});await lU();closeP2();openAdm();toast(nb?`⚠ Bloqué`:`✓ Débloqué`);};
-window.delArt=async()=>{if(!cAid)return;const u=US[cAid];if(!confirm(`SUPPRIMER ${u.name} ?\nIrréversible !`))return;Object.keys(PL_P).forEach(k=>{if(PL_P[k]===cAid)delete PL_P[k];});Object.keys(PL_F).forEach(k=>{if(PL_F[k]===cAid)delete PL_F[k];});await Promise.all([sPP(),sPF()]);const pr=await getDocs(query(collection(db,'produits'),where('artisanId','==',cAid)));for(const d of pr.docs)await deleteDoc(d.ref);await deleteDoc(doc(db,'users',cAid));await lU();closeP2();openAdm();rCal();toast(`✓ ${u.name} supprimée`);};
+window.saveArt=async()=>{if(!cAid)return;const upd={name:document.getElementById('ednm').value.trim(),role:document.getElementById('edro').value.trim(),specialites:document.getElementById('edsp').value.trim(),tel:document.getElementById('edtel').value.trim(),color:cAcl||US[cAid].color,isAdmin:document.getElementById('edadm').checked};if(!upd.name){toast('⚠ Nom requis');return;}await updateDoc(doc(db,'users',cAid),upd);await lU();toast('✓ Mis à jour !');openUM();};
+window.togBlk=async()=>{if(!cAid)return;const u=US[cAid];const nb=!u.blocked;if(!confirm(nb?`Bloquer ${u.name} ?`:`Débloquer ${u.name} ?`))return;await updateDoc(doc(db,'users',cAid),{blocked:nb});await lU();toast(nb?`⚠ Bloqué`:`✓ Débloqué`);openUM();};
+window.delArt=async()=>{if(!cAid)return;const u=US[cAid];if(!confirm(`SUPPRIMER ${u.name} ?\n\nProfil + créneaux + produits effacés.\nIrréversible !`))return;Object.keys(PL_P).forEach(k=>{if(PL_P[k]===cAid)delete PL_P[k];});Object.keys(PL_F).forEach(k=>{if(PL_F[k]===cAid)delete PL_F[k];});await Promise.all([sPP(),sPF()]);const pr=await getDocs(query(collection(db,'produits'),where('artisanId','==',cAid)));for(const d of pr.docs)await deleteDoc(d.ref);await deleteDoc(doc(db,'users',cAid));await lU();rCal();toast(`✓ ${u.name} supprimée`);openUM();};
 
 // EXPORT
 window.expV=async()=>{const s=await getDocs(query(collection(db,'ventes'),orderBy('date','desc')));let csv='Date,Artisan,Produit,Montant,Remise,Paiement,Soldes\n';s.forEach(d=>{const v=d.data();const u=US[v.artisanId];csv+=`${v.date},"${u?.name||'?'}","${v.produit||''}",${v.montant||0},${v.remise||0},"${v.paiement||''}",${v.solde?'Oui':'Non'}\n`;});dl(csv,'ventes.csv');};
